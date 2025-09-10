@@ -19,7 +19,7 @@
         </font>
     </Label>
 
-    <Button mnemonicParsing="false" text="Analizar" />
+    <Button mnemonicParsing="false" text="Analizar" alignment="TOP_LEFT"/>
 
     <HBox spacing="10" VBox.vgrow="ALWAYS">
         <TextArea fx:id="panelIzuiqerdo" prefHeight="200" prefWidth="200" HBox.hgrow="ALWAYS"/>

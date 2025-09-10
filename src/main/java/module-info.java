@@ -6,4 +6,6 @@ module fi.uaemex.ensambladores.proyectoensambladores {
 
     opens fi.uaemex.ensambladores.proyectoensambladores to javafx.fxml;
     exports fi.uaemex.ensambladores.proyectoensambladores;
+    exports fi.uaemex.ensambladores.proyectoensambladores.controller;
+    opens fi.uaemex.ensambladores.proyectoensambladores.controller to javafx.fxml;
 }

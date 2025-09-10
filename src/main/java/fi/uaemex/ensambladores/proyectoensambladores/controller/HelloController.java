@@ -1,4 +1,4 @@
-package fi.uaemex.ensambladores.proyectoensambladores;
+package fi.uaemex.ensambladores.proyectoensambladores.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
