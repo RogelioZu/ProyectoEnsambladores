@@ -23,16 +23,20 @@ public class HelloController {
             System.out.println("El area de texto esta vacia");
             return;
         }
-        String[] palabras = text.split("\\s+");
+        
+        String[] lineas = text.split("\\r?\\n"); 
         StringBuilder textoResultado = new StringBuilder();
-        for (String palabra : palabras) {
-            textoResultado.append(palabra).append("\n");
 
-            panelDerecho.setText(textoResultado.toString());
+        for (String linea : lineas) {
+            if (linea.trim().startsWith(";")) {
+                continue;
+            }
+            String[] palabras = linea.split("\\s+");
+            for (String palabra : palabras) {
+                textoResultado.append(palabra).append("\n");
+            }
         }
 
+        panelDerecho.setText(textoResultado.toString());
     }
-
-
-
 }
