@@ -19,11 +19,11 @@
         </font>
     </Label>
 
-    <Button mnemonicParsing="false" text="Analizar" />
+    <Button onAction="#AnalizarTexto" text="Analizar" />
 
     <HBox spacing="10" VBox.vgrow="ALWAYS">
-        <TextArea fx:id="panelIzuiqerdo" prefHeight="200" prefWidth="200" HBox.hgrow="ALWAYS"/>
+        <TextArea fx:id="panelIzquierdo" prefHeight="200" prefWidth="200" HBox.hgrow="ALWAYS"/>
 
-        <TextArea fx:id="panelDerecho" prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+        <TextArea fx:id="panelDerecho" prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" editable="false" />
     </HBox>
 </VBox>
