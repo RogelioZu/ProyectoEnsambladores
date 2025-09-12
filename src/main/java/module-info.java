@@ -3,6 +3,7 @@ module fi.uaemex.ensambladores.proyectoensambladores {
     requires javafx.fxml;
 
     requires com.dlsc.formsfx;
+    requires java.desktop;
 
     opens fi.uaemex.ensambladores.proyectoensambladores to javafx.fxml;
     exports fi.uaemex.ensambladores.proyectoensambladores;
