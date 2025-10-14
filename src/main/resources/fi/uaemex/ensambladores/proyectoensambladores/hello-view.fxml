@@ -33,6 +33,6 @@
     <HBox spacing="10" VBox.vgrow="ALWAYS">
         <TextArea fx:id="panelIzquierdo" prefHeight="200" prefWidth="200" HBox.hgrow="ALWAYS"/>
 
-        <TextArea fx:id="panelDerecho" prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" editable="false" />
+        <TextArea fx:id="panelCentral" prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" editable="false" />
     </HBox>
 </VBox>

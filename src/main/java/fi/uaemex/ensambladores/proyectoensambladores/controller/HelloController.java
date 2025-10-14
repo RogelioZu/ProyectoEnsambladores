@@ -17,6 +17,8 @@ public class HelloController {
     @FXML
     private TextArea panelIzquierdo;
     @FXML
+    private TextArea panelCentral;
+    @FXML
     private TextArea panelDerecho;
 
 
@@ -51,7 +53,7 @@ public class HelloController {
 
 
         String text = panelIzquierdo.getText();
-        panelDerecho.clear();
+        panelCentral.clear();
 
         if(text == null || text.trim().isEmpty()){
             System.out.println("El area de texto esta vacia");
@@ -71,12 +73,12 @@ public class HelloController {
             }
         }
 
-        panelDerecho.setText(textoResultado.toString());
+        panelCentral.setText(textoResultado.toString());
     }
     @FXML
     private void Limpiar(){
         panelIzquierdo.setText("");
-        panelDerecho.setText("");
+        panelCentral.setText("");
     }
 
 }
