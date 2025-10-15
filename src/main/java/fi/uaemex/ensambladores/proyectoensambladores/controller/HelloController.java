@@ -154,7 +154,6 @@ public class HelloController {
 
         // Generar reporte en panel derecho
         StringBuilder reporte = new StringBuilder();
-        reporte.append("=== ANÁLISIS DEL PROGRAMA ENSAMBLADOR ===\n\n");
 
         if (!directivasEncontradas.isEmpty()) {
             reporte.append("DIRECTIVAS:\n");

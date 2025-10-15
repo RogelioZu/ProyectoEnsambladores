@@ -34,6 +34,6 @@
         <TextArea fx:id="panelIzquierdo" prefHeight="200" prefWidth="200" HBox.hgrow="ALWAYS" />
 
         <TextArea fx:id="panelCentral" editable="false" prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-      <TextArea fx:id="panelDerecho" prefHeight="579.0" prefWidth="207.0" />
+      <TextArea fx:id="panelDerecho" prefHeight="579.0" prefWidth="232.0" />
     </HBox>
 </VBox>
