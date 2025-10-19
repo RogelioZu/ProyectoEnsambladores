@@ -56,7 +56,7 @@ public class HelloController {
         FileChooser selectorArchivo = new FileChooser();
         selectorArchivo.setTitle("Abrir Archivo de Texto");
 
-        FileChooser.ExtensionFilter filtroTxt = new FileChooser.ExtensionFilter("Archivos de Texto (*.txt)", "*.txt");
+        FileChooser.ExtensionFilter filtroTxt = new FileChooser.ExtensionFilter("Archivos de Texto (*.txt)", "*.txt","*.asm");
         selectorArchivo.getExtensionFilters().add(filtroTxt);
 
         Stage stage = (Stage) panelIzquierdo.getScene().getWindow();
