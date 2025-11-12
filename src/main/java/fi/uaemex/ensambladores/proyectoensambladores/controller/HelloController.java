@@ -19,11 +19,19 @@ public class HelloController {
     private TextArea panelCentral;
     @FXML
     private TextArea panelDerecho;
+    @FXML
+    private TextArea panelSegmentos;
+    @FXML
+    private TextArea panelTablaSimbolos;
 
     // Definición de elementos del lenguaje ensamblador
     private static final Set<String> PALABRAS_RESERVADAS = new HashSet<>(Arrays.asList(
             "flat", "stdcall", "ExitProcess", "Proto", "dwExitCode",
-            "main", "proc", "invoke", "endp", "end"
+            "main", "proc", "invoke", "endp", "end", "segment", "ends"
+    ));
+
+    private static final Set<String> DIRECTIVAS = new HashSet<>(Arrays.asList(
+            ".data", ".stack", ".code", ".model"
     ));
 
     private static final Set<String> REGISTROS = new HashSet<>(Arrays.asList(
@@ -40,7 +48,7 @@ public class HelloController {
     private static final Set<String> TIPOS_DATO = new HashSet<>(Arrays.asList(
             "db", "dw", "dd", "dq", "dt",
             "byte", "word", "dword", "qword", "tbyte",
-            "real4", "real8", "real10"
+            "real4", "real8", "real10", "dup"
     ));
 
     private static final Set<String> INSTRUCCIONES = new HashSet<>(Arrays.asList(
@@ -50,6 +58,21 @@ public class HelloController {
             "call", "ret", "push", "pop",
             "cmp", "test", "lea", "int"
     ));
+
+    // Clase para almacenar información de símbolos
+    private static class Simbolo {
+        String nombre;
+        String tipo;
+        String valor;
+        int tamanio;
+
+        public Simbolo(String nombre, String tipo, String valor, int tamanio) {
+            this.nombre = nombre;
+            this.tipo = tipo;
+            this.valor = valor;
+            this.tamanio = tamanio;
+        }
+    }
 
     @FXML
     private void abrirArchivo(ActionEvent event) {
@@ -77,9 +100,11 @@ public class HelloController {
         String text = panelIzquierdo.getText();
         panelCentral.clear();
         panelDerecho.clear();
+        panelSegmentos.clear();
+        panelTablaSimbolos.clear();
 
         if (text == null || text.trim().isEmpty()) {
-            System.out.println("El area de texto esta vacia");
+            System.out.println("El área de texto está vacía");
             return;
         }
 
@@ -95,8 +120,34 @@ public class HelloController {
         Set<String> constantesNumericas = new LinkedHashSet<>();
         Set<String> etiquetas = new LinkedHashSet<>();
 
+        // Tabla de símbolos
+        Map<String, Simbolo> tablaSimbolos = new LinkedHashMap<>();
+
+        // Análisis de segmentos
+        String segmentoActual = "";
+        List<String> lineasSegmentoData = new ArrayList<>();
+        List<String> lineasSegmentoPila = new ArrayList<>();
+        List<String> lineasSegmentoCodigo = new ArrayList<>();
+        Map<Integer, String> analisisLineas = new LinkedHashMap<>();
+
+        int numeroLinea = 1;
         for (String linea : lineas) {
-            if (linea.trim().startsWith(";")) {
+            String lineaTrim = linea.trim();
+
+            // Detectar segmento actual
+            if (lineaTrim.toLowerCase().contains(".data")) {
+                segmentoActual = "data";
+                directivasEncontradas.add(".data");
+            } else if (lineaTrim.toLowerCase().contains(".stack")) {
+                segmentoActual = "stack";
+                directivasEncontradas.add(".stack");
+            } else if (lineaTrim.toLowerCase().contains(".code")) {
+                segmentoActual = "code";
+                directivasEncontradas.add(".code");
+            }
+
+            if (lineaTrim.startsWith(";")) {
+                numeroLinea++;
                 continue;
             }
 
@@ -111,13 +162,48 @@ public class HelloController {
                 }
             }
 
+            // Análisis de declaraciones de variables en segmento .data
+            boolean esCorrecta = true;
+            StringBuilder errores = new StringBuilder();
+
+            if (segmentoActual.equals("data") && !lineaTrim.startsWith(".") && !lineaTrim.isEmpty()) {
+                String resultadoAnalisis = analizarDeclaracionVariable(lineaTrim, tablaSimbolos);
+                if (resultadoAnalisis != null) {
+                    esCorrecta = false;
+                    errores.append(resultadoAnalisis);
+                }
+                lineasSegmentoData.add(lineaTrim);
+            } else if (segmentoActual.equals("stack") && !lineaTrim.isEmpty()) {
+                lineasSegmentoPila.add(lineaTrim);
+            } else if (segmentoActual.equals("code") && !lineaTrim.isEmpty()) {
+                lineasSegmentoCodigo.add(lineaTrim);
+
+                // Validar instrucciones en código
+                if (!lineaTrim.startsWith(".") && !lineaTrim.contains(":")) {
+                    String errorInstruccion = validarInstruccion(lineaTrim);
+                    if (errorInstruccion != null) {
+                        esCorrecta = false;
+                        errores.append(errorInstruccion);
+                    }
+                }
+            }
+
+            // Guardar análisis de la línea
+            if (!lineaTrim.isEmpty()) {
+                if (esCorrecta) {
+                    analisisLineas.put(numeroLinea, "✓ CORRECTA");
+                } else {
+                    analisisLineas.put(numeroLinea, "✗ INCORRECTA - " + errores.toString());
+                }
+            }
+
             String[] palabras = linea.split("\\s+|,");
             for (String palabra : palabras) {
                 palabra = palabra.trim();
                 if (palabra.isEmpty()) continue;
 
                 // Limpiar caracteres especiales al final
-                String palabraLimpia = palabra.replaceAll("[,;:]", "");
+                String palabraLimpia = palabra.replaceAll("[,;:()]", "");
                 String palabraMinuscula = palabraLimpia.toLowerCase();
 
                 textoResultado.append(palabraLimpia).append("\n");
@@ -148,11 +234,14 @@ public class HelloController {
                     constantesNumericas.add(palabraLimpia);
                 }
             }
+
+            numeroLinea++;
         }
 
+        // PANEL CENTRAL - Mantener funcionalidad original (tokens)
         panelCentral.setText(textoResultado.toString());
 
-        // Generar reporte en panel derecho
+        // PANEL DERECHO - Mantener funcionalidad original (reporte de elementos)
         StringBuilder reporte = new StringBuilder();
 
         if (!directivasEncontradas.isEmpty()) {
@@ -213,6 +302,217 @@ public class HelloController {
         }
 
         panelDerecho.setText(reporte.toString());
+
+        // NUEVOS PANELES INFERIORES
+        // Panel Segmentos - Análisis de líneas y segmentos
+        generarAnalisisSegmentos(lineasSegmentoData, lineasSegmentoPila, lineasSegmentoCodigo, analisisLineas);
+
+        // Panel Tabla de Símbolos
+        generarTablaSimbolos(tablaSimbolos);
+    }
+
+    private String analizarDeclaracionVariable(String linea, Map<String, Simbolo> tablaSimbolos) {
+        String[] partes = linea.split("\\s+");
+
+        if (partes.length < 2) {
+            return "Declaración incompleta";
+        }
+
+        String nombreVariable = partes[0].trim();
+        String tipoDato = partes[1].toLowerCase().trim();
+
+        // Validar nombre de variable
+        if (!esIdentificadorValido(nombreVariable)) {
+            return "Nombre de variable inválido";
+        }
+
+        // Validar tipo de dato
+        if (!TIPOS_DATO.contains(tipoDato)) {
+            return "Tipo de dato no reconocido: " + tipoDato;
+        }
+
+        // Determinar tamaño según tipo de dato
+        int tamanio = obtenerTamanioPorTipo(tipoDato);
+        String valor = "";
+
+        // Extraer valor si existe
+        if (partes.length > 2) {
+            valor = partes[2];
+
+            // Manejar DUP
+            if (linea.toLowerCase().contains("dup")) {
+                int cantidad = 0;
+                String valorDup = "";
+
+                // Extraer cantidad del DUP
+                for (String parte : partes) {
+                    if (esConstanteNumerica(parte)) {
+                        cantidad = Integer.parseInt(parte);
+                    }
+                    if (parte.contains("(") && parte.contains(")")) {
+                        valorDup = parte;
+                    }
+                }
+
+                if (cantidad > 0) {
+                    valor = cantidad + " dup " + valorDup;
+                    tamanio = tamanio * cantidad;
+                }
+            } else if (!esConstanteNumerica(valor) && !valor.contains("\"") && !valor.contains("'") && !valor.contains("h") && !valor.contains("b")) {
+                return "Valor inicial inválido";
+            }
+        }
+
+        // Agregar a tabla de símbolos
+        tablaSimbolos.put(nombreVariable, new Simbolo(nombreVariable, tipoDato, valor, tamanio));
+
+        return null; // Sin errores
+    }
+
+    private String validarInstruccion(String linea) {
+        String[] partes = linea.trim().split("\\s+", 2);
+
+        if (partes.length == 0) return null;
+
+        String instruccion = partes[0].toLowerCase();
+
+        // Verificar si es una instrucción válida
+        if (!INSTRUCCIONES.contains(instruccion) && !PALABRAS_RESERVADAS.contains(instruccion)) {
+            return "Instrucción no reconocida: " + instruccion;
+        }
+
+        // Validar que tenga operandos si los requiere
+        if (partes.length < 2 && requiereOperandos(instruccion)) {
+            return "Instrucción requiere operandos";
+        }
+
+        return null;
+    }
+
+    private boolean requiereOperandos(String instruccion) {
+        Set<String> instruccionesSinOperandos = new HashSet<>(Arrays.asList(
+                "ret", "nop", "hlt", "clc", "stc", "cli", "sti", "endp", "end"
+        ));
+        return !instruccionesSinOperandos.contains(instruccion);
+    }
+
+    private int obtenerTamanioPorTipo(String tipo) {
+        switch (tipo.toLowerCase()) {
+            case "db":
+            case "byte":
+                return 1;
+            case "dw":
+            case "word":
+                return 2;
+            case "dd":
+            case "dword":
+            case "real4":
+                return 4;
+            case "dq":
+            case "qword":
+            case "real8":
+                return 8;
+            case "dt":
+            case "tbyte":
+            case "real10":
+                return 10;
+            default:
+                return 0;
+        }
+    }
+
+    private void generarAnalisisSegmentos(List<String> data, List<String> pila, List<String> codigo, Map<Integer, String> analisisLineas) {
+        StringBuilder analisis = new StringBuilder();
+
+
+        analisis.append("            ANÁLISIS DE LÍNEAS Y SEGMENTOS\n");
+
+
+        // Análisis de líneas
+        if (!analisisLineas.isEmpty()) {
+            analisis.append("📋 ANÁLISIS DE LÍNEAS:\n");
+            analisis.append("─────────────────────────────────────────────────────────\n");
+            for (Map.Entry<Integer, String> entry : analisisLineas.entrySet()) {
+                analisis.append(String.format("  Línea %d: %s\n", entry.getKey(), entry.getValue()));
+            }
+            analisis.append("\n");
+        }
+
+        // Segmento de datos
+        if (!data.isEmpty()) {
+            analisis.append("📊 SEGMENTO DE DATOS (.data)\n");
+            analisis.append("─────────────────────────────────────────────────────────\n");
+            int totalBytes = 0;
+            for (String linea : data) {
+                if (!linea.startsWith(".") && !linea.trim().isEmpty()) {
+                    analisis.append("  • ").append(linea).append("\n");
+                    // Calcular tamaño aproximado
+                    if (linea.contains("dw")) totalBytes += 2;
+                    else if (linea.contains("db") || linea.contains("byte")) totalBytes += 1;
+                    else if (linea.contains("dd") || linea.contains("dword")) totalBytes += 4;
+                }
+            }
+            analisis.append("\n  Total estimado: ").append(totalBytes).append(" bytes\n\n");
+        }
+
+        // Segmento de pila
+        if (!pila.isEmpty()) {
+            analisis.append("📚 SEGMENTO DE PILA (.stack)\n");
+            analisis.append("─────────────────────────────────────────────────────────\n");
+            for (String linea : pila) {
+                if (!linea.startsWith(".") && !linea.trim().isEmpty()) {
+                    analisis.append("  • ").append(linea).append("\n");
+                }
+            }
+            analisis.append("\n");
+        }
+
+        // Segmento de código
+        if (!codigo.isEmpty()) {
+            analisis.append("⚙️ SEGMENTO DE CÓDIGO (.code)\n");
+            analisis.append("─────────────────────────────────────────────────────────\n");
+            analisis.append("  Total de líneas de código: ").append(codigo.size()).append("\n\n");
+        }
+
+        panelSegmentos.setText(analisis.toString());
+    }
+
+    private void generarTablaSimbolos(Map<String, Simbolo> tablaSimbolos) {
+        StringBuilder tabla = new StringBuilder();
+
+
+        tabla.append("                        TABLA DE SÍMBOLOS\n");
+
+
+        if (tablaSimbolos.isEmpty()) {
+            tabla.append("  No se encontraron símbolos en el segmento .data\n");
+        } else {
+            tabla.append(String.format("%-18s %-12s %-25s %-12s\n",
+                    "SÍMBOLO", "TIPO", "VALOR", "TAMAÑO"));
+            tabla.append("───────────────────────────────────────────────────────────────────\n");
+
+            for (Simbolo simbolo : tablaSimbolos.values()) {
+                String valorMostrar = simbolo.valor.isEmpty() ? "(sin inicializar)" : simbolo.valor;
+                if (valorMostrar.length() > 23) {
+                    valorMostrar = valorMostrar.substring(0, 20) + "...";
+                }
+
+                tabla.append(String.format("%-18s %-12s %-25s %-12s\n",
+                        simbolo.nombre,
+                        simbolo.tipo.toUpperCase(),
+                        valorMostrar,
+                        simbolo.tamanio + " bytes"));
+            }
+
+            tabla.append("\n");
+            int totalBytes = tablaSimbolos.values().stream()
+                    .mapToInt(s -> s.tamanio)
+                    .sum();
+            tabla.append("═══════════════════════════════════════════════════════════════════\n");
+            tabla.append("Total de memoria utilizada: ").append(totalBytes).append(" bytes\n");
+        }
+
+        panelTablaSimbolos.setText(tabla.toString());
     }
 
     private boolean esConstanteNumerica(String palabra) {
@@ -263,5 +563,7 @@ public class HelloController {
         panelIzquierdo.setText("");
         panelCentral.setText("");
         panelDerecho.setText("");
+        panelSegmentos.setText("");
+        panelTablaSimbolos.setText("");
     }
 }
