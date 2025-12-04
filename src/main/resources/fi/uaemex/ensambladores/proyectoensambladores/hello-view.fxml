@@ -26,7 +26,7 @@
 
         <Button onAction="#abrirArchivo" text="Abrir archivo" />
         <Button onAction="#AnalizarTexto" text="Analizar" />
-        <Button onAction="#Limpiar" text="Limpiar" />
+        <Button onAction="#LimpiarPaneles" text="Limpiar" />
     </HBox>
 
     <!-- Sección superior: 3 paneles principales -->
